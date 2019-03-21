@@ -180,6 +180,10 @@ fun HttpClientConfig<*>.Logging(block: Logging.Config.() -> Unit = {}) {
 }
 
 private suspend inline fun ByteReadChannel.readText(charset: Charset): String {
-    val packet = readRemaining(Long.MAX_VALUE, 0)
-    return packet.readText(charset = charset)
+    return let {
+        println("start")
+        val result = readRemaining().readText(charset = charset)
+        println("end")
+        result
+    }
 }

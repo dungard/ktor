@@ -4,7 +4,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.io.*
 import kotlinx.io.core.*
 
-private const val CHUNK_BUFFER_SIZE = 4096L
+private const val CHUNK_BUFFER_SIZE = 4088L
 
 /**
  * Split source [ByteReadChannel] into 2 new one.
@@ -17,11 +17,24 @@ fun ByteReadChannel.split(coroutineScope: CoroutineScope): Pair<ByteReadChannel,
 
     coroutineScope.launch {
         try {
+            var count = 0
             while (!this@split.isClosedForRead) {
                 this@split.readRemaining(CHUNK_BUFFER_SIZE).use { chunk ->
+                    val src = chunk.readBytes()
                     listOf(
-                        async { first.writePacket(chunk.copy()) },
-                        async { second.writePacket(chunk.copy()) }
+                        async {
+                            first.writeFully(src)
+//                            first.writePacket(chunk.copy())
+                        },
+                        async {
+                            count++
+                            println("Start writing chunk: $count ${src.size} ${second.availableForRead} ${second.availableForWrite}")
+                            if (count == 18) {
+                                println("HERE")
+                            }
+                            second.writeFully(src)
+                            println("Write chunk done")
+                        }
                     ).awaitAll()
                 }
             }
